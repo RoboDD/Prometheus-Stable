@@ -1,0 +1,37 @@
+<!-- 本launch为使用px4_pos_controller进行机载控制时的机载端启动脚本 -->
+<launch>
+	<!-- 启动MAVROS -->
+	<node pkg="mavros" type="mavros_node" name="mavros" output="screen">
+		<!-- 不同机载电脑,注意修改fcu_url至正确的端口号及波特率 -->
+		<param name="fcu_url" value="/dev/ttyUSB0:921600" />
+		<param name="gcs_url" value="" />
+		<param name="target_system_id" value="1" />
+		<param name="target_component_id" value="1" />
+		<rosparam command="load" file="$(find prometheus_experiment)/config/mavros_config/px4_pluginlists.yaml" />
+		<rosparam command="load" file="$(find prometheus_experiment)/config/mavros_config/px4_config.yaml" />
+	</node>
+	
+	<!-- run the px4_pos_controller.cpp -->
+	<node pkg="prometheus_control" type="px4_pos_controller" name="px4_pos_controller" output="screen">
+		<rosparam command="load" file="$(find prometheus_experiment)/config/prometheus_control_config/px4_pos_controller.yaml"/>
+	</node>
+
+    	<!-- run web_cam-->
+    <node pkg="prometheus_detection" type="web_cam0" name="web_cam0" output="screen">
+
+    </node>
+    
+    	<!-- run the landpad_det.cpp -->
+    <node pkg="prometheus_detection" type="landpad_det" name="landpad_det" output="screen">
+        <param name="camera_topic" type="string" value="/web_cam0/image_raw" />
+        <param name="camera_info" type="string" value="camera_param.yaml" />
+    </node>
+
+	<!-- run the autonomous_landing.cpp -->
+	<node pkg="prometheus_mission" type="autonomous_landing" name="autonomous_landing" output="screen" launch-prefix="gnome-terminal --">
+		<rosparam command="load" file="$(find prometheus_mission)/autonomous_landing/autonomous_landing.yaml" />	
+		<param name="debug_mode" value="0.0" />
+	</node>
+
+</launch>
+
